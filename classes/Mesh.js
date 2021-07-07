@@ -1,11 +1,12 @@
 class Mesh {
-  constructor(obj, parts, materials, objOffset, radius, worldMesh) {
+  constructor(obj, parts, materials, objOffset, radius, worldMesh, position) {
     this.obj = obj;
     this.parts = parts;
     this.materials = materials;
     this.objOffset = objOffset;
     this.radius = radius;
     this.worldMesh = worldMesh;
+    this.position = position;
   }
 
   async setObj(url) {
@@ -53,7 +54,9 @@ class Mesh {
       opacity: 1,
     };
 
-    this.parts = this.obj.geometries.map(({ material, data }) => {
+    this.parts = this.obj.geometries.map(({ material, data, object }) => {
+      this.position = data.position;
+      let p = data.position;
       if (data.color) {
         if (data.position.length === data.color.length)
           data.color = { numComponents: 3, data: data.color };
@@ -76,12 +79,13 @@ class Mesh {
         // we probably want to generate normals if there are none
         data.normal = { value: [0, 0, 1] };
       }
-
       const bufferInfo = webglUtils.createBufferInfoFromArrays(gl, data);
 
       return {
         material: { ...defaultMaterial, ...this.materials[material] },
         bufferInfo,
+        object,
+        p,
       };
     });
 
@@ -98,7 +102,6 @@ class Mesh {
     this.worldMesh = world;
     for (const { bufferInfo, material } of this.parts) {
       webglUtils.setBuffersAndAttributes(gl, programInfo, bufferInfo);
-
       if (world != undefined)
         webglUtils.setUniforms(
           programInfo,

@@ -30,7 +30,7 @@ function getGeometriesExtents(geometries) {
 }
 
 function handleKey(keycode, keymap, isPressed) {
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < keymap.length; i++) {
     if (keycode == keymap[i]) key[i] = isPressed;
   }
 }
@@ -52,4 +52,44 @@ function getObjOffset(geometries) {
       -1
     );
   });
+}
+
+function getCoordinates(positions) {
+  let coords = [];
+  let lastIndex = 0;
+
+  for (let i = 0; i < positions.length / 3; i++) {
+    coords.push(positions.slice(lastIndex, lastIndex + 3));
+    lastIndex += 3;
+  }
+
+  return coords;
+}
+
+function getMax(arr, index) {
+  return Math.max(...getSubArray(arr, index));
+}
+
+function getMin(arr, index) {
+  return Math.min(...getSubArray(arr, index));
+}
+
+function getSubArray(arr, index) {
+  let toRet = [];
+
+  arr.forEach((el) => {
+    toRet.push(el[index]);
+  });
+
+  return toRet;
+}
+
+function objCoords(positions) {
+  let coords = getCoordinates(positions);
+  let xMin = getMin(coords, 0);
+  let xMax = getMax(coords, 0);
+  let zMin = getMin(coords, 2);
+  let zMax = getMax(coords, 2);
+
+  return { xMin, xMax, zMin, zMax };
 }

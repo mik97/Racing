@@ -8,17 +8,6 @@ html {
   height: 100%;
 }
 
-.loader-wrapper {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .loader {
   position: fixed;
   display: block;
@@ -36,50 +25,6 @@ html {
   animation-fill-mode: forwards;
 }
 
-.loader-inner {
-  vertical-align: top;
-  display: inline-block;
-  width: 100%;
-  background-color: #fff;
-  animation: loader-inner 2s infinite ease-in;
-}
-
-@keyframes loader {
-  0% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(180deg);
-  }
-  50% {
-    transform: rotate(180deg);
-  }
-  75% {
-    transform: rotate(360deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes loader-inner {
-  0% {
-    height: 0%;
-  }
-  25% {
-    height: 0%;
-  }
-  50% {
-    height: 100%;
-  }
-  75% {
-    height: 100%;
-  }
-  100% {
-    height: 0%;
-  }
-}
-
 @keyframes fadeOut {
   100% {
     opacity: 0;
@@ -93,7 +38,7 @@ html {
   height: 100%;
 }
 
-#overlay {
+#overlay2 {
   position: absolute;
   right: 10px;
   top: 10px;
@@ -103,7 +48,7 @@ html {
   padding: 1em;
 }
 
-#overlay2 {
+#overlay3 {
   position: absolute;
   right: 20px;
   top: 180px;
@@ -113,7 +58,7 @@ html {
   padding: 1em;
 }
 
-#overlay3 {
+#overlay {
   position: absolute;
   right: 45%;
   text-align: center;
@@ -130,15 +75,6 @@ html {
 }
 
 #innerContainer {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-}
-
-#innerContainer2 {
   position: absolute;
   left: 0;
   top: 0;
@@ -173,7 +109,7 @@ html {
   }
 }
 
-#img1 {
+#back {
   opacity: 1;
   width: 5%;
   height: 20%;
@@ -182,7 +118,7 @@ html {
   bottom: 10px;
 }
 
-#img2 {
+#front {
   opacity: 1;
   width: 5%;
   height: 20%;
@@ -191,7 +127,7 @@ html {
   bottom: 10px;
 }
 
-#img3 {
+#sx {
   opacity: 1;
   width: 10%;
   height: 20%;
@@ -200,7 +136,7 @@ html {
   bottom: 10px;
 }
 
-#img4 {
+#dx {
   opacity: 1;
   width: 10%;
   height: 20%;
@@ -209,7 +145,7 @@ html {
   bottom: 10px;
 }
 
-#e {
+#upgrade {
   opacity: 0.5;
   width: 10%;
   height: 20%;

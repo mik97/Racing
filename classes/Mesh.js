@@ -1,12 +1,10 @@
 class Mesh {
-  constructor(obj, parts, materials, objOffset, radius, worldMesh, position) {
+  constructor(obj, parts, materials, objOffset, worldMesh) {
     this.obj = obj;
     this.parts = parts;
     this.materials = materials;
     this.objOffset = objOffset;
-    this.radius = radius;
     this.worldMesh = worldMesh;
-    this.position = position;
   }
 
   async setObj(url) {
@@ -28,7 +26,6 @@ class Mesh {
       defaultNormal: create1PixelTexture(gl, [127, 127, 255, 0]),
     };
 
-    // load texture for materials
     for (const material of Object.values(this.materials)) {
       Object.entries(material)
         .filter(([key]) => key.endsWith("Map"))
@@ -43,6 +40,17 @@ class Mesh {
         });
     }
 
+    this.setParts(textures);
+
+    const extents = getGeometriesExtents(this.obj.geometries);
+    const range = m4.subtractVectors(extents.max, extents.min);
+    this.objOffset = m4.scaleVector(
+      m4.addVectors(extents.min, m4.scaleVector(range, 0.5)),
+      -1
+    );
+  }
+
+  setParts(textures) {
     const defaultMaterial = {
       diffuse: [1, 1, 1],
       diffuseMap: textures.defaultWhite,
@@ -55,7 +63,6 @@ class Mesh {
     };
 
     this.parts = this.obj.geometries.map(({ material, data, object }) => {
-      this.position = data.position;
       let p = data.position;
       if (data.color) {
         if (data.position.length === data.color.length)
@@ -67,7 +74,6 @@ class Mesh {
       if (data.texcoord && data.normal) {
         data.tangent = generateTangents(data.position, data.texcoord);
       } else {
-        // There are no tangents
         data.tangent = { value: [1, 0, 0] };
       }
 
@@ -76,7 +82,6 @@ class Mesh {
       }
 
       if (!data.normal) {
-        // we probably want to generate normals if there are none
         data.normal = { value: [0, 0, 1] };
       }
       const bufferInfo = webglUtils.createBufferInfoFromArrays(gl, data);
@@ -88,31 +93,12 @@ class Mesh {
         p,
       };
     });
-
-    const extents = getGeometriesExtents(this.obj.geometries);
-    const range = m4.subtractVectors(extents.max, extents.min);
-    this.radius = m4.length(range) * 1.2;
-    this.objOffset = m4.scaleVector(
-      m4.addVectors(extents.min, m4.scaleVector(range, 0.5)),
-      -1
-    );
   }
 
   drawObj(programInfo, world) {
     this.worldMesh = world;
     for (const { bufferInfo, material } of this.parts) {
-      webglUtils.setBuffersAndAttributes(gl, programInfo, bufferInfo);
-      if (world != undefined)
-        webglUtils.setUniforms(
-          programInfo,
-          {
-            u_world: world,
-          },
-          material
-        );
-      else webglUtils.setUniforms(programInfo, {}, material);
-
-      webglUtils.drawBufferInfo(gl, bufferInfo);
+      drawMesh(programInfo, bufferInfo, world, material);
     }
   }
 }

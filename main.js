@@ -1,17 +1,11 @@
-let canvas, gl, vertexShaderSource, fragmentShaderSource;
+let canvas, gl, vertexShaderSource, fragmentShaderSource, meshProgramInfo;
+let canvas2, gl2d, canvas3, gl3;
 
-let buttonA, buttonI, arrowSx, arrowDx, e, first, third, controller;
-
-let meshProgramInfo;
-
-let car, urls, sky, scene;
-
-let touchCoord;
+let car, sky, scene;
 
 let firstPerson;
 
-let time = 0,
-  toAdd;
+let time = 0;
 
 let timeUpgrade = 0;
 let isTake = false;
@@ -27,61 +21,45 @@ let key,
 let theta = degToRad(90),
   phi = degToRad(70);
 let d = 3;
-let drag,
-  cameraRotationY = 0,
-  cameraRotationX = 0,
-  isRotateX = false,
-  isRotateY = false;
+let drag;
 
-let collision = false,
-  change = false;
-
-let xMin, xMax, zMin, zMax;
+let collision = false;
 
 let gameover, increase;
-let canvas2, gl2d, canvas3, gl3;
-
-let check1, check2m, div;
+let toIncrement, time2, toIncrement2;
 
 let oldTextures = [];
+
 async function main() {
   canvas = document.getElementById("canvas");
   gl = canvas.getContext("webgl2");
-  canvas2 = document.querySelector("#overlay");
+
+  canvas2 = document.querySelector("#overlay2");
   gl2d = canvas2.getContext("2d");
-  canvas3 = document.querySelector("#overlay3");
+
+  canvas3 = document.querySelector("#overlay");
   gl3 = canvas3.getContext("2d");
 
-  // let container = document.getElementById("innerContainer");
-  buttonI = document.getElementById("img1");
-  buttonA = document.getElementById("img2");
-  arrowSx = document.getElementById("img3");
-  arrowDx = document.getElementById("img4");
-  e = document.getElementById("e");
-  first = document.getElementById("firstPerson");
-  third = document.getElementById("thirdPerson");
   gameover = document.getElementById("gameover");
 
-  if (navigator.userAgent.match(/Android/)) {
-    buttonI.hidden = false;
-    buttonA.hidden = false;
-    arrowSx.hidden = false;
-    arrowDx.hidden = false;
-    e.hidden = false;
-    first.hidden = false;
-    third.hidden = false;
-  }
+  const check1 = document.getElementById("texture");
+  const check2 = document.getElementById("bump");
 
-  handleTouch(buttonI, 83);
-  handleTouch(buttonA, 87);
-  handleTouch(arrowSx, 65);
-  handleTouch(arrowDx, 68);
-  handleTouch(e, 69);
+  const controller = new Controller();
+  controller.setController();
+
+  if (navigator.userAgent.match(/Android/)) controller.hideController();
+
+  handleTouch(controller.buttonW, 83);
+  handleTouch(controller.buttonS, 87);
+  handleTouch(controller.buttonA, 65);
+  handleTouch(controller.buttonD, 68);
+  handleTouch(controller.upgrade, 69);
 
   firstPerson = false;
 
-  handleFirstOrThirdP(first, true);
-  handleFirstOrThirdP(third, false);
+  handleFirstOrThirdP(controller.firstPerson, true);
+  handleFirstOrThirdP(controller.thirdPerson, false);
 
   if (!gl) return;
 
@@ -90,27 +68,23 @@ async function main() {
   canvas.onmouseout = mouseUp;
   canvas.onmousemove = mouseMove;
   canvas.onwheel = mouseWheel;
-  canvas.ontouchstart = touchStart;
-  canvas.ontouchmove = touchMove;
-  canvas.ontouchend = touchEnd;
-
-  check1 = document.getElementById("texture");
-  check2 = document.getElementById("bump");
-  div = document.getElementById("overlay2");
+  canvas.ontouchstart = controller.touchStart;
+  canvas.ontouchmove = controller.touchMove;
+  canvas.ontouchend = controller.touchEnd;
 
   check1.onclick = () => {
-    textureOnClick(car.chassis, oldTextures[0]);
-    textureOnClick(scene.plane, oldTextures[1]);
+    textureOnClick(check1, car.chassis, oldTextures[0]);
+    textureOnClick(check1, scene.plane, oldTextures[1]);
     scene.upgradeCubes.forEach((uc) => {
-      textureOnClick(uc, oldTextures[3]);
-      textureOnClick(uc, oldTextures[4]);
-      textureOnClick(uc, oldTextures[5]);
+      textureOnClick(check1, uc, oldTextures[3]);
+      textureOnClick(check1, uc, oldTextures[4]);
+      textureOnClick(check1, uc, oldTextures[5]);
     });
   };
   check2.onclick = () => {
-    bumpOnClick(car.chassis, oldTextures[0]);
-    bumpOnClick(scene.plane, oldTextures[1]);
-    bumpOnClick(scene.cubes, oldTextures[2]);
+    bumpOnClick(check2, car.chassis, oldTextures[0]);
+    bumpOnClick(check2, scene.plane, oldTextures[1]);
+    bumpOnClick(check2, scene.cubes, oldTextures[2]);
   };
 
   window.addEventListener("load", () => {
@@ -137,13 +111,6 @@ async function main() {
     fragmentShaderSource,
   ]);
 
-  urls = [
-    "/resources/go-kart/kart_wheel_back_right2.obj",
-    "/resources/go-kart/kart_wheel_back_left2.obj",
-    "/resources/go-kart/kart_wheel_front_right2.obj",
-    "/resources/go-kart/kart_wheel_front_left2.obj",
-  ];
-
   sky = new Sky();
 
   scene = new Scene();
@@ -154,7 +121,7 @@ async function main() {
 
   await sky.initializeSky();
 
-  await car.initializeCar(urls);
+  await car.initializeCar();
 
   oldTextures.push(this.getOld(car.chassis));
   oldTextures.push(this.getOld(scene.plane));
@@ -178,12 +145,6 @@ function getOld(mesh) {
   return olds;
 }
 
-function degToRad(deg) {
-  return (deg * Math.PI) / 180;
-}
-
-let toIncrement, time2, toIncrement2;
-
 async function render() {
   gl2d.clearRect(0, 0, gl2d.canvas.width, gl2d.canvas.height);
 
@@ -191,7 +152,6 @@ async function render() {
     gl3.clearRect(0, 0, gl2d.canvas.width, gl2d.canvas.height);
 
   if (key[5]) firstPerson = false;
-
   if (key[6]) firstPerson = true;
 
   if (!collision && !stopCube) {
@@ -205,7 +165,7 @@ async function render() {
       increase = 0.002;
       setTimeout(() => {
         slowlyCube = false;
-      }, 4000);
+      }, 3000);
     } else increase = 0.005;
 
     if (toIncrement) time += increase;
@@ -215,12 +175,17 @@ async function render() {
   timeUpgrade += 1;
 
   webglUtils.resizeCanvasToDisplaySize(canvas);
+
   gl.viewport(0, 0, canvas.width, canvas.height);
   gl.enable(gl.DEPTH_TEST);
 
   let target = [0, 0, 0];
 
-  let position = thirdPersonCameraPosition();
+  let position = [
+    d * Math.sin(phi) * Math.cos(theta),
+    d * Math.cos(phi),
+    d * Math.sin(phi) * Math.sin(theta),
+  ];
 
   let deg;
 
@@ -235,13 +200,11 @@ async function render() {
   );
 
   const up = [0, 1, 0];
-  // theta = degToRad(facing);
+
   let camera = m4.lookAt(position, target, up);
   let viewMatrix = m4.inverse(camera);
 
   viewMatrix = m4.yRotate(viewMatrix, degToRad(-facing));
-  // if (isRotateY) viewMatrix = m4.yRotate(viewMatrix, degToRad(cameraRotationX));
-  // if (isRotateX) viewMatrix = m4.xRotate(viewMatrix, degToRad(cameraRotationY));
 
   viewMatrix[12] = 0;
   viewMatrix[13] = 0;
@@ -250,7 +213,7 @@ async function render() {
   sky.drawSky(m4.inverse(viewDirectionProjectionMatrix));
 
   viewMatrix = m4.inverse(camera);
-  // viewMatrix = m4.xRotate(viewMatrix, degToRad(20));
+
   if (firstPerson) {
     viewMatrix = m4.xRotate(viewMatrix, degToRad(-10));
     viewMatrix = m4.translate(viewMatrix, 0, -0.3, 2.6);
@@ -259,9 +222,6 @@ async function render() {
     theta = degToRad(90);
     position = thirdPersonCameraPosition();
   }
-
-  // if (isRotateY) viewMatrix = m4.yRotate(viewMatrix, degToRad(cameraRotationX));
-  // if (isRotateX) viewMatrix = m4.xRotate(viewMatrix, degToRad(cameraRotationY));
 
   // first-person
   viewMatrix = m4.yRotate(viewMatrix, degToRad(-facing));
@@ -286,115 +246,74 @@ async function render() {
     scene.drawCubes(meshProgramInfo, worldMatrix);
     setTimeout(() => {
       stopCube = false;
-    }, 4000);
+    }, 3000);
   }
 
   await scene.drawScene(meshProgramInfo, worldMatrix);
 
   car.drawCar(worldMatrix);
 
-  let planeCoords = objCoords(scene.plane.position);
+  let carCoords = car.getCarCoords();
 
-  let carCoords = { xMin, xMax, zMin, zMax };
+  this.handleCollision(carCoords);
 
-  car.chassis.parts.forEach((w) => {
-    if (w.object.includes("back_wheel_right")) {
-      let coords = objCoords(w.p);
-      carCoords.xMax = coords.xMax + 0.434;
-      carCoords.zMax = coords.zMax + 0.32;
-    }
+  this.handleOutOfRange(carCoords);
 
-    if (w.object.includes("front_wheel_left")) {
-      let coords = objCoords(w.p);
-      carCoords.xMin = coords.xMin - 0.45;
-      carCoords.zMin = coords.zMin - 0.53;
-    }
-  });
-
-  // let carCoords = objCoords(car.chassis.position);
-
-  let cubeCoords = [];
-
-  if (!isInvisible) {
-    scene.cubes.parts.forEach((c, i) => {
-      cubeCoords.push(objCoords(c.p));
-    });
-
-    cubeCoords.forEach((c, i) => {
-      let deltaX = 0,
-        deltaZ = 0;
-      let name = scene.cubes.parts[i].object;
-      let nameToNumber = Number.parseInt(name.slice(1, 3));
-
-      if (name.includes("XN")) deltaX = -time;
-      else if (name.includes("XP")) deltaX = time;
-      else if (name.includes("ZN")) deltaZ = -time;
-      else if (name.includes("ZP")) deltaZ = time;
-      else if (nameToNumber >= 15 && nameToNumber <= 17) deltaZ = -time * 4;
-      else if (nameToNumber >= 18 && nameToNumber <= 20) deltaZ = -time * 4;
-      if (
-        carCoords.xMin + px <= c.xMax + deltaX - 0.2 &&
-        carCoords.xMax + px >= c.xMin + deltaX &&
-        carCoords.zMin + pz <= c.zMax + deltaZ - 0.2 &&
-        carCoords.zMax + pz >= c.zMin + deltaZ
-      ) {
-        collision = true;
-      }
-    });
-  } else {
-    setTimeout(() => {
-      isInvisible = false;
-    }, 4000);
-  }
-
-  if (
-    !(
-      carCoords.xMin + px <= planeCoords.xMax - 1 &&
-      carCoords.xMax + px >= planeCoords.xMin + 1 &&
-      carCoords.zMin + pz <= planeCoords.zMax - 1 &&
-      carCoords.zMax + pz >= planeCoords.zMin + 1
-    )
-  ) {
-    await car.reset();
-  }
-
-  if (
-    carCoords.xMin + px <= planeCoords.xMax - 12 &&
-    carCoords.xMax + px >= planeCoords.xMin + 12 &&
-    carCoords.zMin + pz <= planeCoords.zMax - 6.5 &&
-    carCoords.zMax + pz >= planeCoords.zMin + 6.5
-  ) {
-    await car.reset();
-  }
-  scene.upgradeCubes.forEach((c) => {
-    if (
-      car.chassis.worldMesh[12] <= c.worldMesh[12] + 0.5 &&
-      car.chassis.worldMesh[12] >= c.worldMesh[12] - 0.5 &&
-      car.chassis.worldMesh[14] <= c.worldMesh[14] + 0.5 &&
-      car.chassis.worldMesh[14] >= c.worldMesh[14] - 0.5
-    ) {
-      isTake = true;
-    }
-  });
-
-  if (!isSet && isTake) {
-    upgradeChoice = Math.floor(Math.random() * 3);
-    console.log(upgradeChoice);
-    isSet = true;
-  }
-
-  if (key[4] == true) {
-    checkUpgrade(upgradeChoice);
-    upgradeChoice = -1;
-  }
-
-  gl3.font = "18px Oswald";
-  gl3.fillStyle = "white";
-  gl3.textAlign = "center";
+  this.handleUpgrades();
 
   if (!collision) car.moveCar();
   else gameover.hidden = false;
 
+  this.setUpgradesPane();
+  this.setControlPane();
+
+  requestAnimationFrame(render);
+}
+
+let mouseDown = (event) => {
+  event.preventDefault();
+  drag = true;
+
+  oldX = event.pageX;
+  oldY = event.pageY;
+  return false;
+};
+
+let mouseUp = () => {
+  drag = false;
+};
+
+let mouseMove = (event) => {
+  if (!drag) return false;
+
+  const location = mouseOnCanvas(event.pageX, event.pageY);
+
+  if (!firstPerson) handleMovement(location);
+};
+
+let mouseWheel = (event) => {
+  if (!firstPerson) {
+    if (event.deltaY < 0) {
+      if (d > 1.93) d *= 0.8;
+    } else d *= 1.2;
+  }
+};
+
+function keyDown(event) {
+  handleKey(event.keyCode, [87, 83, 65, 68, 69, 84, 70], true);
+}
+
+function keyUp(event) {
+  handleKey(event.keyCode, [87, 83, 65, 68, 69, 84, 70], false);
+}
+
+function setUpgradesPane() {
+  gl3.font = "18px Oswald";
+  gl3.fillStyle = "white";
+  gl3.textAlign = "center";
+}
+
+function setControlPane() {
   gl2d.font = "18px Oswald";
   gl2d.fillStyle = "white";
   gl2d.fillText("Pannello di controllo", 1, 12);
@@ -412,188 +331,6 @@ async function render() {
     132
   );
   gl2d.fillText("'Rotella del mouse' - Zoom In/Zoom Out", 1, 147);
-
-  requestAnimationFrame(render);
-}
-
-let mouseDown = (event) => {
-  event.preventDefault();
-  drag = true;
-  // const rect = canvas.getBoundingClientRect();
-  oldX = event.pageX;
-  oldY = event.pageY;
-  return false;
-};
-
-let mouseUp = (event) => {
-  drag = false;
-};
-
-let mouseMove = (event) => {
-  if (!drag) return false;
-
-  const location = mouseOnCanvas(event.pageX, event.pageY);
-
-  if (!firstPerson) handleMovement(location);
-};
-
-function handleMovement(loc) {
-  if (loc.x < oldX) {
-    oldX = loc.x;
-    theta += (-1 * Math.PI) / 180;
-    isRotateX = true;
-  } else if (loc.x > oldX) {
-    oldX = loc.x;
-    theta -= (-1 * Math.PI) / 180;
-    isRotateX = true;
-  }
-
-  if (loc.y < oldY) {
-    oldY = loc.y;
-    if (phi < 1.2) phi -= (-1 * Math.PI) / 180;
-    isRotateY = true;
-  } else if (loc.y > oldY) {
-    oldY = loc.y;
-    if (phi > 0.1) phi += (-1 * Math.PI) / 180;
-    isRotateY = true;
-  }
-}
-
-let mouseWheel = (event) => {
-  if (!firstPerson) event.deltaY < 0 ? (d *= 0.8) : (d *= 1.2);
-};
-
-function keyDown(event) {
-  handleKey(event.keyCode, [87, 83, 65, 68, 69, 84, 70], true);
-}
-
-function keyUp(event) {
-  handleKey(event.keyCode, [87, 83, 65, 68, 69, 84, 70], false);
-}
-
-function touchStart(event) {
-  event.preventDefault();
-  drag = true;
-
-  for (let i = 0; i < event.targetTouches.length; i++) {
-    oldX = event.targetTouches[i].pageX;
-    oldY = event.targetTouches[i].pageY;
-  }
-}
-
-function touchMove(event) {
-  event.preventDefault();
-
-  if (!drag) return false;
-
-  for (let i = 0; i < event.targetTouches.length; i++) {
-    const location = mouseOnCanvas(
-      event.targetTouches[i].pageX,
-      event.targetTouches[i].pageY
-    );
-
-    if (!firstPerson) handleMovement(location);
-  }
-}
-
-function touchEnd(event) {
-  event.preventDefault();
-
-  drag = false;
-}
-
-function firstPersonCameraPosition() {
-  return [0, 1, d * Math.sin(phi)];
-}
-
-function thirdPersonCameraPosition() {
-  return [
-    d * Math.sin(phi) * Math.cos(theta),
-    d * Math.cos(phi),
-    d * Math.sin(phi) * Math.sin(theta),
-  ];
-}
-
-function checkUpgrade(n) {
-  switch (n) {
-    case 0:
-      isInvisible = true;
-      gl3.fillText("Collisions disabled", 75, 12);
-      break;
-    case 1:
-      slowlyCube = true;
-      gl3.fillText("Slowly Cubes", 75, 12);
-      break;
-    case 2:
-      stopCube = true;
-      gl3.fillText("Cubes Stopped", 75, 12);
-      break;
-  }
-}
-
-function textureOnClick(mesh, textures) {
-  let i = 0;
-  if (!check1.checked) {
-    for (const { material } of mesh.parts) {
-      material.diffuseMap = create1PixelTexture(gl, [255, 255, 255, 255]);
-      material.specularMap = create1PixelTexture(gl, [255, 255, 255, 255]);
-    }
-  } else {
-    for (const { material } of mesh.parts) {
-      material.diffuseMap = textures[i].oldDiffuseMap;
-      material.specularMap = textures[i].oldSpecularMap;
-      i++;
-    }
-  }
-}
-
-function bumpOnClick(mesh, textures) {
-  let i = 0;
-  if (!check2.checked) {
-    for (const { material } of mesh.parts) {
-      material.normalMap = create1PixelTexture(gl, [127, 127, 255, 0]);
-    }
-  } else {
-    for (const { material } of mesh.parts) {
-      material.normalMap = textures[i].oldNormalMap;
-      i++;
-    }
-  }
-}
-
-function handleTouch(button, key) {
-  button.ontouchstart = (e) => {
-    e.preventDefault();
-    handleKey(key, [87, 83, 65, 68, 69], true);
-  };
-
-  button.ontouchend = (e) => {
-    e.preventDefault();
-    handleKey(key, [87, 83, 65, 68, 69], false);
-  };
-
-  button.oncontextmenu = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  };
-}
-
-function handleFirstOrThirdP(button, cameraMode) {
-  button.ontouchstart = (e) => {
-    e.preventDefault();
-    firstPerson = cameraMode;
-  };
-
-  button.ontouchend = (e) => {
-    e.preventDefault();
-  };
-
-  window.oncontextmenu = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  };
 }
 
 if (!navigator.userAgent.match(/Chrome\/9[0-1]/)) {

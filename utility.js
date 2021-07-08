@@ -1,3 +1,7 @@
+function degToRad(deg) {
+  return (deg * Math.PI) / 180;
+}
+
 function getExtents(positions) {
   const min = positions.slice(0, 3);
   const max = positions.slice(0, 3);
@@ -27,12 +31,6 @@ function getGeometriesExtents(geometries) {
       max: Array(3).fill(Number.NEGATIVE_INFINITY),
     }
   );
-}
-
-function handleKey(keycode, keymap, isPressed) {
-  for (let i = 0; i < keymap.length; i++) {
-    if (keycode == keymap[i]) key[i] = isPressed;
-  }
 }
 
 function mouseOnCanvas(x, y) {
@@ -92,4 +90,67 @@ function objCoords(positions) {
   let zMax = getMax(coords, 2);
 
   return { xMin, xMax, zMin, zMax };
+}
+
+function drawMesh(programInfo, bufferInfo, world, material) {
+  webglUtils.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+
+  if (world != undefined)
+    webglUtils.setUniforms(
+      programInfo,
+      {
+        u_world: world,
+      },
+      material
+    );
+  else webglUtils.setUniforms(programInfo, {}, material);
+
+  webglUtils.drawBufferInfo(gl, bufferInfo);
+}
+
+function checkUpgrade(n) {
+  switch (n) {
+    case 0:
+      isInvisible = true;
+      gl3.fillText("Collisions disabled", 75, 12);
+      break;
+    case 1:
+      slowlyCube = true;
+      gl3.fillText("Slowly Cubes", 75, 12);
+      break;
+    case 2:
+      stopCube = true;
+      gl3.fillText("Cubes Stopped", 75, 12);
+      break;
+  }
+}
+
+function textureOnClick(checkbox, mesh, textures) {
+  let i = 0;
+  if (!checkbox.checked) {
+    for (const { material } of mesh.parts) {
+      material.diffuseMap = create1PixelTexture(gl, [255, 255, 255, 255]);
+      material.specularMap = create1PixelTexture(gl, [255, 255, 255, 255]);
+    }
+  } else {
+    for (const { material } of mesh.parts) {
+      material.diffuseMap = textures[i].oldDiffuseMap;
+      material.specularMap = textures[i].oldSpecularMap;
+      i++;
+    }
+  }
+}
+
+function bumpOnClick(checkbox, mesh, textures) {
+  let i = 0;
+  if (!checkbox.checked) {
+    for (const { material } of mesh.parts) {
+      material.normalMap = create1PixelTexture(gl, [127, 127, 255, 0]);
+    }
+  } else {
+    for (const { material } of mesh.parts) {
+      material.normalMap = textures[i].oldNormalMap;
+      i++;
+    }
+  }
 }

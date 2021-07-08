@@ -1,51 +1,62 @@
 class Controller {
   constructor() {
-    this.buttonMove;
+    this.buttonW;
+    this.buttonS;
+    this.buttonA;
+    this.buttonD;
+    this.upgrade;
     this.firstPerson;
     this.thirdPerson;
   }
 
-  isTouched(touch, end) {
-    let button, index0;
+  setController() {
+    this.buttonW = document.getElementById("back");
+    this.buttonS = document.getElementById("front");
+    this.buttonA = document.getElementById("sx");
+    this.buttonD = document.getElementById("dx");
+    this.upgrade = document.getElementById("upgrade");
+    this.firstPerson = document.getElementById("firstPerson");
+    this.thirdPerson = document.getElementById("thirdPerson");
+  }
 
-    for (index0 = this.buttonMove.length - 1; index0 > -1; --index0) {
-      button = this.buttonMove[index0];
+  hideController() {
+    this.buttonW.hidden = false;
+    this.buttonS.hidden = false;
+    this.buttonA.hidden = false;
+    this.buttonD.hidden = false;
+    this.upgrade.hidden = false;
+    this.firstPerson.hidden = false;
+    this.thirdPerson.hidden = false;
+  }
 
-      if (button.containsPoint(touch.clientX, touch.clientY) && !end) {
-        button.active = true;
-      }
+  touchStart(event) {
+    event.preventDefault();
+    drag = true;
 
-      if (end) button.active = false;
+    for (let i = 0; i < event.targetTouches.length; i++) {
+      oldX = event.targetTouches[i].pageX;
+      oldY = event.targetTouches[i].pageY;
     }
-
-    if (this.firstPerson.containsPoint(touch.clientX, touch.clientY))
-      this.firstPerson.active = true;
-    else this.firstPerson.active = false;
-
-    if (this.thirdPerson.containsPoint(touch.clientX, touch.clientY))
-      this.thirdPerson.active = true;
-    else this.thirdPerson.active = false;
-  }
-}
-
-class Button {
-  constructor(x, y, width, height, id) {
-    this.active = false;
-    this.id = id;
-    this.width = width;
-    this.height = height;
-    this.x = x;
-    this.y = y;
   }
 
-  containsPoint(x, y) {
-    if (
-      x >= this.x &&
-      x <= this.x + this.width &&
-      y >= this.y &&
-      y <= this.y + this.height
-    )
-      return true;
-    return false;
+  touchMove(event) {
+    event.preventDefault();
+
+    if (!drag) return false;
+
+    for (let i = 0; i < event.targetTouches.length; i++) {
+      const location = mouseOnCanvas(
+        event.targetTouches[i].pageX,
+        event.targetTouches[i].pageY
+      );
+
+      if (!firstPerson) handleMovement(location);
+    }
+  }
+
+  touchEnd(event) {
+    event.preventDefault();
+
+    drag = false;
   }
 }

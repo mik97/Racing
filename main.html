@@ -6,18 +6,18 @@
   <body>
     <div id="container">
       <canvas id="canvas">Your browser doesn't support canvas.</canvas>
+      <canvas id="overlay" width="150" height="15"></canvas>
 
-      <canvas id="overlay3" width="150" height="15"></canvas>
-      <canvas id="overlay"></canvas>
-
-      <div><img id="img1" src="Images/pedaleI.png" hidden /></div>
-      <div><img id="img2" src="Images/pedaleA.png" hidden /></div>
-      <div><img id="img3" src="Images/frecciaSX.png" hidden /></div>
-      <div><img id="img4" src="Images/frecciaDX.png" hidden /></div>
-      <div><img id="e" src="Images/e.png" hidden /></div>
+      <div><img id="back" src="Images/pedaleI.png" hidden /></div>
+      <div><img id="front" src="Images/pedaleA.png" hidden /></div>
+      <div><img id="sx" src="Images/frecciaSX.png" hidden /></div>
+      <div><img id="dx" src="Images/frecciaDX.png" hidden /></div>
+      <div><img id="upgrade" src="Images/e.png" hidden /></div>
       <div><img id="firstPerson" src="Images/firstPerson.png" hidden /></div>
       <div><img id="thirdPerson" src="Images/thirdPerson.png" hidden /></div>
-      <div id="overlay2">
+
+      <canvas id="overlay2"></canvas>
+      <div id="overlay3">
         <label
           ><input id="texture" type="checkbox" checked /> Attiva/Disattiva
           Textures</label
@@ -40,6 +40,8 @@
     <script src="/classes/Sky.js"></script>
     <script src="/classes/Scene.js"></script>
     <script src="/classes/Mesh.js"></script>
+
+    <script src="handlers.js"></script>
     <script src="utility.js"></script>
     <script src="objLoading.js"></script>
     <script src="webgl-utils.js"></script>

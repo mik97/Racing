@@ -7,10 +7,10 @@ class Sky {
 
   async initializeSky() {
     const skyboxVertexShader = await (
-      await fetch("/shaders/skybox.vs.glsl")
+      await fetch("./shaders/skybox.vs.glsl")
     ).text();
     const skyboxFragmentShader = await (
-      await fetch("/shaders/skybox.fs.glsl")
+      await fetch("./shaders/skybox.fs.glsl")
     ).text();
 
     this.programInfo = webglUtils.createProgramInfo(gl, [
@@ -97,27 +97,27 @@ class Sky {
     const faceInfos = [
       {
         target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-        url: "/resources/skybox/skybox_left2.png",
+        url: "./resources/skybox/skybox_left2.png",
       },
       {
         target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-        url: "/resources/skybox/skybox_right1.png",
+        url: "./resources/skybox/skybox_right1.png",
       },
       {
         target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-        url: "/resources/skybox/skybox_bottom4.png",
+        url: "./resources/skybox/skybox_bottom4.png",
       },
       {
         target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-        url: "/resources/skybox/skybox_top3.png",
+        url: "./resources/skybox/skybox_top3.png",
       },
       {
         target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-        url: "/resources/skybox/skybox_back6.png",
+        url: "./resources/skybox/skybox_back6.png",
       },
       {
         target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-        url: "/resources/skybox/skybox_front5.png",
+        url: "./resources/skybox/skybox_front5.png",
       },
     ];
 

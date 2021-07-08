@@ -20,7 +20,7 @@ class Car {
   async initializeCar() {
     this.set();
 
-    await this.chassis.setObj("/resources/go-kart/wheels.obj");
+    await this.chassis.setObj("./resources/car/car.obj");
   }
 
   drawCar(world) {

@@ -13,12 +13,12 @@ class Scene {
     this.finishLine = new Mesh();
     this.upgradeCubes = [new Mesh(), new Mesh(), new Mesh()];
 
-    await this.plane.setObj("/resources/plane/plane.obj");
-    await this.cubes.setObj("/resources/plane/cubes.obj");
-    await this.finishLine.setObj("/resources/plane/finishLine.obj");
+    await this.plane.setObj("./resources/plane/plane.obj");
+    await this.cubes.setObj("./resources/plane/cubes.obj");
+    await this.finishLine.setObj("./resources/plane/finishLine.obj");
 
     this.upgradeCubes.forEach((uc, i) => {
-      uc.setObj("/resources/plane/cubeWithMe" + (i + 1) + ".obj");
+      uc.setObj("./resources/plane/cubeWithMe" + (i + 1) + ".obj");
     });
   }
 

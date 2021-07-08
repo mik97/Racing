@@ -1,5 +1,5 @@
 let canvas, gl, vertexShaderSource, fragmentShaderSource, meshProgramInfo;
-let canvas2, gl2d, canvas3, gl3;
+let canvas2, ctx, canvas3, ctx2;
 
 let car, sky, scene;
 
@@ -35,10 +35,10 @@ async function main() {
   gl = canvas.getContext("webgl2");
 
   canvas2 = document.querySelector("#overlay2");
-  gl2d = canvas2.getContext("2d");
+  ctx = canvas2.getContext("2d");
 
   canvas3 = document.querySelector("#overlay");
-  gl3 = canvas3.getContext("2d");
+  ctx2 = canvas3.getContext("2d");
 
   gameover = document.getElementById("gameover");
 
@@ -68,9 +68,9 @@ async function main() {
   canvas.onmouseout = mouseUp;
   canvas.onmousemove = mouseMove;
   canvas.onwheel = mouseWheel;
-  canvas.ontouchstart = controller.touchStart;
-  canvas.ontouchmove = controller.touchMove;
-  canvas.ontouchend = controller.touchEnd;
+  canvas.ontouchstart = touchStart;
+  canvas.ontouchmove = touchMove;
+  canvas.ontouchend = touchEnd;
 
   check1.onclick = () => {
     textureOnClick(check1, car.chassis, oldTextures[0]);
@@ -93,7 +93,7 @@ async function main() {
       loadingScreen.className = "loadingScreen hidden";
       const loader = document.querySelector(".loader");
       loader.className = "loader hidden";
-    }, 3000);
+    }, 5000);
   });
 
   window.addEventListener("keydown", keyDown, true);
@@ -123,33 +123,16 @@ async function main() {
 
   await car.initializeCar();
 
-  oldTextures.push(this.getOld(car.chassis));
-  oldTextures.push(this.getOld(scene.plane));
-  oldTextures.push(this.getOld(scene.cubes));
-  scene.upgradeCubes.forEach((uc) => {
-    oldTextures.push(this.getOld(uc));
-  });
+  setOldTexture();
 
   render();
 }
 
-function getOld(mesh) {
-  let oldDiffuseMap, oldSpecularMap, oldNormalMap;
-  let olds = [];
-  for (const { material } of mesh.parts) {
-    oldDiffuseMap = material.diffuseMap;
-    oldSpecularMap = material.specularMap;
-    oldNormalMap = material.normalMap;
-    olds.push({ oldDiffuseMap, oldSpecularMap, oldNormalMap });
-  }
-  return olds;
-}
-
 async function render() {
-  gl2d.clearRect(0, 0, gl2d.canvas.width, gl2d.canvas.height);
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
   if (!isInvisible && !slowlyCube && !stopCube)
-    gl3.clearRect(0, 0, gl2d.canvas.width, gl2d.canvas.height);
+    ctx2.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
   if (key[5]) firstPerson = false;
   if (key[6]) firstPerson = true;
@@ -220,7 +203,11 @@ async function render() {
     d = 3.5;
     phi = degToRad(70);
     theta = degToRad(90);
-    position = thirdPersonCameraPosition();
+    position = [
+      d * Math.sin(phi) * Math.cos(theta),
+      d * Math.cos(phi),
+      d * Math.sin(phi) * Math.sin(theta),
+    ];
   }
 
   // first-person
@@ -299,6 +286,37 @@ let mouseWheel = (event) => {
   }
 };
 
+function touchStart(event) {
+  event.preventDefault();
+  drag = true;
+
+  for (let i = 0; i < event.targetTouches.length; i++) {
+    oldX = event.targetTouches[i].pageX;
+    oldY = event.targetTouches[i].pageY;
+  }
+}
+
+function touchMove(event) {
+  event.preventDefault();
+
+  if (!drag) return false;
+
+  for (let i = 0; i < event.targetTouches.length; i++) {
+    const location = mouseOnCanvas(
+      event.targetTouches[i].pageX,
+      event.targetTouches[i].pageY
+    );
+
+    if (!firstPerson) handleMovement(location);
+  }
+}
+
+function touchEnd(event) {
+  event.preventDefault();
+
+  drag = false;
+}
+
 function keyDown(event) {
   handleKey(event.keyCode, [87, 83, 65, 68, 69, 84, 70], true);
 }
@@ -308,29 +326,29 @@ function keyUp(event) {
 }
 
 function setUpgradesPane() {
-  gl3.font = "18px Oswald";
-  gl3.fillStyle = "white";
-  gl3.textAlign = "center";
+  ctx2.font = "18px Oswald";
+  ctx2.fillStyle = "white";
+  ctx2.textAlign = "center";
 }
 
 function setControlPane() {
-  gl2d.font = "18px Oswald";
-  gl2d.fillStyle = "white";
-  gl2d.fillText("Pannello di controllo", 1, 12);
-  gl2d.font = "12px Monospace";
-  gl2d.fillText("'W' - Muove in avanti l'auto", 1, 27);
-  gl2d.fillText("'S' - Muove indietro l'auto", 1, 42);
-  gl2d.fillText("'A' - Muove a sinistra l'auto", 1, 57);
-  gl2d.fillText("'D' - Muove a destra l'auto", 1, 72);
-  gl2d.fillText("'E' - Attiva il potenziamento", 1, 87);
-  gl2d.fillText("'F' - Attiva la visuale in prima persona", 1, 102);
-  gl2d.fillText("'T' - Attiva la visuale in terza persona", 1, 117);
-  gl2d.fillText(
+  ctx.font = "18px Oswald";
+  ctx.fillStyle = "white";
+  ctx.fillText("Pannello di controllo", 1, 12);
+  ctx.font = "12px Monospace";
+  ctx.fillText("'W' - Muove in avanti l'auto", 1, 27);
+  ctx.fillText("'S' - Muove indietro l'auto", 1, 42);
+  ctx.fillText("'A' - Muove a sinistra l'auto", 1, 57);
+  ctx.fillText("'D' - Muove a destra l'auto", 1, 72);
+  ctx.fillText("'E' - Attiva il potenziamento", 1, 87);
+  ctx.fillText("'F' - Attiva la visuale in prima persona", 1, 102);
+  ctx.fillText("'T' - Attiva la visuale in terza persona", 1, 117);
+  ctx.fillText(
     "'Pulsante sinistro del mouse' - Ruota/Inclina la visuale",
     1,
     132
   );
-  gl2d.fillText("'Rotella del mouse' - Zoom In/Zoom Out", 1, 147);
+  ctx.fillText("'Rotella del mouse' - Zoom In/Zoom Out", 1, 147);
 }
 
 if (!navigator.userAgent.match(/Chrome\/9[0-1]/)) {

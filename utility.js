@@ -112,15 +112,15 @@ function checkUpgrade(n) {
   switch (n) {
     case 0:
       isInvisible = true;
-      gl3.fillText("Collisions disabled", 75, 12);
+      ctx2.fillText("Collisions disabled", 75, 12);
       break;
     case 1:
       slowlyCube = true;
-      gl3.fillText("Slowly Cubes", 75, 12);
+      ctx2.fillText("Slowly Cubes", 75, 12);
       break;
     case 2:
       stopCube = true;
-      gl3.fillText("Cubes Stopped", 75, 12);
+      ctx2.fillText("Cubes Stopped", 75, 12);
       break;
   }
 }
@@ -153,4 +153,25 @@ function bumpOnClick(checkbox, mesh, textures) {
       i++;
     }
   }
+}
+
+function setOldTexture() {
+  oldTextures.push(this.getOld(car.chassis));
+  oldTextures.push(this.getOld(scene.plane));
+  oldTextures.push(this.getOld(scene.cubes));
+  scene.upgradeCubes.forEach((uc) => {
+    oldTextures.push(this.getOld(uc));
+  });
+}
+
+function getOld(mesh) {
+  let oldDiffuseMap, oldSpecularMap, oldNormalMap;
+  let olds = [];
+  for (const { material } of mesh.parts) {
+    oldDiffuseMap = material.diffuseMap;
+    oldSpecularMap = material.specularMap;
+    oldNormalMap = material.normalMap;
+    olds.push({ oldDiffuseMap, oldSpecularMap, oldNormalMap });
+  }
+  return olds;
 }
